@@ -208,3 +208,9 @@ __marimo__/
 
 # MacOS system files
 .DS_STORE
+
+# Data files
+Bundle*/
+
+# Solution files
+*.txt
