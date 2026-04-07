@@ -22,6 +22,7 @@ RUN pip3 install \
     lmfit \
     gplearn \
     plotly \
+    cvxopt \
     --break-system-packages
 
 # 4. Konfiguracja silnika Julii i PySR
