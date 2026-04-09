@@ -1,20 +1,41 @@
 import random
 import numpy as np
+from enum import Enum
 
-# * sprawdzic random solution: TODO
-# * crossover: TODO (obecnie jest troche biased, rada Tomczyka: sbx crossover)
-# * mutation: TODO (ale mozna zrobic a la sbx)
-# * wystrzegac sie dzielenia przez sume: TODO
-# * narysowac reference lines: TODO
-# * poprawic normalizacje: TODO
-# * narysowac pareto fronty dobrze: TODO
-# * porownac z benchmarkami (np. equal weights, ECM, WSM): TODO
+class CrossoverMethod(Enum):
+    SBX = 'sbx'
+    one_point = 'one_point'
+    arithmetic = 'arithmetic'
+
+class MutationMethod(Enum):
+    SBX = 'sbx'
+    polynomial = 'polynomial'
+    swap = 'swap'
+    flow = 'flow'
+
 class NSGAIII:
-    def __init__(self, prices, risk_matrix, pop_size, nr_of_iterations, n_objectives, p, dirichlet_alpha=0.2, mutation_prob=0.1, crossover_prob=0.8):
+    def __init__(
+            self, 
+            prices, 
+            risk_matrix, 
+            pop_size, 
+            nr_of_iterations, 
+            n_objectives, 
+            p, 
+            dirichlet_alpha=0.2, 
+            mutation_prob=0.1, 
+            crossover_prob=0.8, 
+            crossover_method=CrossoverMethod.SBX,
+            mutation_method=MutationMethod.polynomial,
+            directions=None
+        ):
         self.prices = prices
         self.risk_matrix = risk_matrix
         self.scores = []
+        self.normalized_scores = []
         self.n_objectives = n_objectives
+        # directions: +1 = maximize, -1 = minimize (one per objective)
+        self.directions = np.array(directions) if directions is not None else np.full(n_objectives, -1)
 
         self.population = []
         self.pop_size = pop_size
@@ -25,6 +46,8 @@ class NSGAIII:
 
         self.mutation_prob = mutation_prob
         self.crossover_prob = crossover_prob
+        self.mutation_method = mutation_method
+        self.crossover_method = crossover_method
 
         self.reference_points = self.generate_reference_points()
         self.create_initial_population()
@@ -64,26 +87,80 @@ class NSGAIII:
             new_sol = self.create_random_dirichlet_solution()
             self.population.append(new_sol)
 
-    def mutation(self, sol):
+    def mutation_flow(self, sol):
         sol = np.copy(sol)
         idx1, idx2 = random.sample(range(self.n), 2)
         delta = random.uniform(0, min(sol[idx1], sol[idx2]))
         sol[idx1] -= delta
         sol[idx2] += delta
         return sol
+    
+    def mutation_swap(self, sol):
+        sol = np.copy(sol)
+        idx1, idx2 = random.sample(range(self.n), 2)
+        sol[idx1], sol[idx2] = sol[idx2], sol[idx1]
+        return sol
+    
+    def mutation_polynomial(self, sol):
+        eta_m = 10
+        sol = np.copy(sol)
+        for i in range(self.n):
+            if random.random() < (1.0 / self.n):
+                u = random.random()
+                delta = (2*u)**(1/(eta_m+1)) - 1 if u <= 0.5 else 1 - (2*(1-u))**(1/(eta_m+1))
+                sol[i] += delta
+        
+        sol = np.maximum(sol, 1e-6)
+        return sol / np.sum(sol)
+    
+    def mutation(self, sol):
+        assert self.mutation_method in MutationMethod
+        return getattr(self, f'mutation_{self.mutation_method.value}')(sol)
 
-    def crossover(self, sol1, sol2):
+    def crossover_arithmetic(self, sol1, sol2):
         # Arithmetic crossover: new_sol = alpha * sol1 + (1 - alpha) * sol2
         alpha = random.random()
         child1 = alpha * np.copy(sol1) + (1 - alpha) * np.copy(sol2)
         child2 = alpha * np.copy(sol2) + (1 - alpha) * np.copy(sol1)
         return child1, child2
 
-        # One-point crossover
-        # idx = random.randint(1, self.n - 1)
-        # child1 = np.concatenate((sol1[:idx], sol2[idx:]))
-        # child2 = np.concatenate((sol2[:idx], sol1[idx:]))
-        # return child1/sum(child1), child2/sum(child2)
+    def crossover_one_point(self, sol1, sol2):
+        # One-point crossover - bardzo kiepski pomysl
+        idx = random.randint(1, self.n - 1)
+        child1 = np.concatenate((sol1[:idx], sol2[idx:]))
+        child2 = np.concatenate((sol2[:idx], sol1[idx:]))
+        return child1/sum(child1), child2/sum(child2)
+
+    def crossover_sbx(self, sol1, sol2):
+        # SBX - Simulated Binary Crossover
+        eta_c = 20
+        child1 = np.zeros(self.n)
+        child2 = np.zeros(self.n)
+        
+        for i in range(self.n):
+            if random.random() <= 0.5:
+                if abs(sol1[i] - sol2[i]) > 1e-9:
+                    u = random.random()
+                    beta = (2 * u)**(1.0/(eta_c + 1)) if u <= 0.5 else (1.0/(2*(1-u)))**(1.0/(eta_c + 1))
+                    child1[i] = 0.5 * ((1 + beta) * sol1[i] + (1 - beta) * sol2[i])
+                    child2[i] = 0.5 * ((1 - beta) * sol1[i] + (1 + beta) * sol2[i])
+                else:
+                    child1[i], child2[i] = sol1[i], sol2[i]
+            else:
+                child1[i], child2[i] = sol1[i], sol2[i]
+
+        # Additive correction
+        def repair(child):
+            child = np.maximum(child, 1e-6) # eps
+            diff = np.sum(child) - 1.0
+            child -= diff / self.n
+            return np.maximum(child, 1e-6) / np.sum(np.maximum(child, 1e-6))
+
+        return repair(child1), repair(child2)
+    
+    def crossover(self, sol1, sol2):
+        assert self.crossover_method in CrossoverMethod
+        return getattr(self, f'crossover_{self.crossover_method.value}')(sol1, sol2)
     
     def create_offspring(self, sol1, sol2):
         if random.random() < self.crossover_prob:
@@ -151,12 +228,13 @@ class NSGAIII:
         return fronts
 
     def normalize_population(self):
-        # Normalize the population's objective values to [0, 1] range
+        # Normalize the population's objective values to [0, 1] range for niching.
+        # Raw scores are preserved in self.scores for plotting and domination checks.
         scores_array = np.array(self.scores)
         min_scores = np.min(scores_array, axis=0)
         max_scores = np.max(scores_array, axis=0)
-        normalized_scores = (scores_array - min_scores) / (max_scores - min_scores + 1e-9)
-        self.scores = [tuple(i) for i in normalized_scores.tolist()]
+        normalized = (scores_array - min_scores) / (max_scores - min_scores + 1e-9)
+        self.normalized_scores = [tuple(i) for i in normalized.tolist()]
 
     def niching_selection(self, current_scores, last_front_scores, solution_counter):
         # 1. Helper function to associate solutions with reference points based on perpendicular distance
@@ -242,19 +320,18 @@ class NSGAIII:
         # If new population is full, return it
         if len(new_population_indices) == self.pop_size:
             return [self.population[i] for i in new_population_indices], [self.scores[i] for i in new_population_indices]
-        
+
         # If we have a partially filled population, we need to select from the last front
         solution_counter = self.pop_size - len(new_population_indices)
-        
-        # Prepare indices for niching selection
-        # Use only the already selected individuals and those from the last front
-        current_scores = np.array([self.scores[i] for i in new_population_indices])
-        last_front_scores = np.array([self.scores[i] for i in last_front])
-        
+
+        # Niching uses normalized scores for fair comparison across objectives
+        current_scores = np.array([self.normalized_scores[i] for i in new_population_indices])
+        last_front_scores = np.array([self.normalized_scores[i] for i in last_front])
+
         chosen_from_last_front = self.niching_selection(current_scores, last_front_scores, solution_counter)
         final_indices = new_population_indices + [last_front[i] for i in chosen_from_last_front]
-        
-        # Update population
+
+        # Update population — keep raw scores for plotting
         scores = [self.scores[i] for i in final_indices]
         population = [self.population[i] for i in final_indices]
 
@@ -285,6 +362,10 @@ class NSGAIII:
         return self.population
 
     def normalize_pareto_front(self):
+        # to be overriden in subclass
+        pass
+
+    def plot_pareto_front(self):
         # to be overriden in subclass
         pass
 

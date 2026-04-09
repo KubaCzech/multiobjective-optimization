@@ -5,7 +5,7 @@ import numpy as np
 from .nsga_iii import NSGAIII
 
 class NSGAIIITwoObjectives(NSGAIII):
-    def __init__(self, prices, risk_matrix, pop_size, p, nr_of_iterations, dirichlet_alpha=0.2, mutation_prob=0.1, crossover_prob=0.8):
+    def __init__(self, prices, risk_matrix, pop_size, p, nr_of_iterations, dirichlet_alpha=0.2, mutation_prob=0.3, crossover_prob=0.8):
         super().__init__(prices, risk_matrix, pop_size, nr_of_iterations, 2, p, dirichlet_alpha, mutation_prob, crossover_prob)
 
     def generate_reference_points(self):
@@ -44,10 +44,28 @@ class NSGAIIITwoObjectives(NSGAIII):
         plt.figure(figsize=(5, 5))
         plt.scatter(prices, risks, c='blue', marker='o')
 
-        # for pt in self.reference_points:
-        #     max_val = max(min(prices), max(risks))
-        #     plt.plot([1, pt[0] * max_val], [0, pt[1] * max_val], color='red', linestyle='--', alpha=0.3, linewidth=1)
+        p_min, p_max = min(prices), max(prices)
+        r_min, r_max = min(risks), max(risks)
 
+        scale = 2.0 
+
+        # (Utopia Point) -> p_max, r_min
+        start_p = p_max
+        start_r = r_min
+
+        for pt in self.reference_points:
+            target_p = p_min + pt[0] * (p_max - p_min)
+            target_r = r_min + pt[1] * (r_max - r_min)
+            
+            vec_p = target_p - start_p
+            vec_r = target_r - start_r
+            
+            plt.plot([start_p, start_p + vec_p * scale], 
+                    [start_r, start_r + vec_r * scale], 
+                    color='red', linestyle='--', alpha=0.2, zorder=1)
+
+        plt.xlim(p_min * 0.9, p_max * 1.1)
+        plt.ylim(r_min * 0.9, r_max * 1.1)
         plt.title(title)
         plt.ylabel('Risk [min]')
         plt.xlabel('Price')
