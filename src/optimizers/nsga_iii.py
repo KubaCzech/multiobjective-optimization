@@ -2,6 +2,9 @@ import random
 import numpy as np
 from enum import Enum
 
+# TODO: normalizacja przez punkt idealny
+# TODO: elite preservation (elitism)
+
 class CrossoverMethod(Enum):
     SBX = 'sbx'
     one_point = 'one_point'
@@ -19,7 +22,6 @@ class NSGAIII:
             prices, 
             risk_matrix, 
             pop_size, 
-            nr_of_iterations, 
             n_objectives, 
             p, 
             dirichlet_alpha=0.2, 
@@ -27,7 +29,8 @@ class NSGAIII:
             crossover_prob=0.8, 
             crossover_method=CrossoverMethod.SBX,
             mutation_method=MutationMethod.polynomial,
-            directions=None
+            directions=None, 
+            elitism=True
         ):
         self.prices = prices
         self.risk_matrix = risk_matrix
@@ -39,7 +42,6 @@ class NSGAIII:
 
         self.population = []
         self.pop_size = pop_size
-        self.nr_of_iterations = nr_of_iterations
         self.n = len(prices) # number of assets
         self.p = p
         self.dirichlet_alpha = dirichlet_alpha
@@ -48,6 +50,9 @@ class NSGAIII:
         self.crossover_prob = crossover_prob
         self.mutation_method = mutation_method
         self.crossover_method = crossover_method
+        if elitism:
+            self.best_overall = [None for _ in n_objectives]
+        self.elitism = elitism
 
         self.reference_points = self.generate_reference_points()
         self.create_initial_population()
@@ -186,6 +191,9 @@ class NSGAIII:
         for sol in self.population:
             score = self.fitness_function(sol)
             self.scores.append(score)
+        self.scores = np.array(self.scores)
+        if self.elitism:
+            pass # TODO
 
     def dominates(self, sol1, sol2):
         # to be overridden in subclass
@@ -196,6 +204,9 @@ class NSGAIII:
         domination_counts = [0] * n
         dominated_solutions = [set() for _ in range(n)]
         fronts = [[]]
+
+        if self.elitism:
+            pass # TODO - preserve best solutions
 
         # Calculate domination relations
         for i in range(n):
@@ -230,11 +241,21 @@ class NSGAIII:
     def normalize_population(self):
         # Normalize the population's objective values to [0, 1] range for niching.
         # Raw scores are preserved in self.scores for plotting and domination checks.
-        scores_array = np.array(self.scores)
-        min_scores = np.min(scores_array, axis=0)
-        max_scores = np.max(scores_array, axis=0)
-        normalized = (scores_array - min_scores) / (max_scores - min_scores + 1e-9)
-        self.normalized_scores = [tuple(i) for i in normalized.tolist()]
+        # Maximized objectives are flipped so all objectives become minimized,
+        # placing the ideal point at (0, 0, ...) as required by NSGA-III reference point geometry.
+        # TODO - normalize by ideal point
+        scores_array = np.zeros_like(self.scores)
+        min_scores = np.min(self.scores, axis=0)
+        max_scores = np.max(self.scores, axis=0)
+        for dim in range(scores_array.shape[1]):
+            if self.directions[dim] == 1:
+                normalized = (max_scores[dim] - self.scores[:, dim])/(max_scores[dim] - min_scores[dim] + 1e-9)
+            elif self.directions[dim] == -1:
+                normalized = (self.scores[:, dim] - min_scores[dim])/(max_scores[dim] - min_scores[dim] + 1e-9)
+            else:
+                raise ValueError
+            scores_array[:, dim] = normalized
+        self.normalized_scores = scores_array
 
     def niching_selection(self, current_scores, last_front_scores, solution_counter):
         # 1. Helper function to associate solutions with reference points based on perpendicular distance
@@ -340,10 +361,10 @@ class NSGAIII:
 
         return population, scores
 
-    def evolve(self):
-        for it_number in range(self.nr_of_iterations):
+    def evolve(self, nr_of_iterations):
+        for it_number in range(nr_of_iterations):
             if (it_number+1) % 50 == 0:
-                print(f"Iteration {it_number+1}/{self.nr_of_iterations}")
+                print(f"Iteration {it_number+1}/{nr_of_iterations}")
             new_population = []
             while len(new_population) < self.pop_size:
                 parent1, parent2 = random.sample(self.population, 2)
@@ -358,7 +379,6 @@ class NSGAIII:
             self.normalize_population()
 
             self.population, self.scores = self.choose_new_population(fronts)
-        # self.normalize_population()
         return self.population
 
     def normalize_pareto_front(self):

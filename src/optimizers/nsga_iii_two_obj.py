@@ -5,8 +5,18 @@ import numpy as np
 from .nsga_iii import NSGAIII
 
 class NSGAIIITwoObjectives(NSGAIII):
-    def __init__(self, prices, risk_matrix, pop_size, p, nr_of_iterations, dirichlet_alpha=0.2, mutation_prob=0.3, crossover_prob=0.8):
-        super().__init__(prices, risk_matrix, pop_size, nr_of_iterations, 2, p, dirichlet_alpha, mutation_prob, crossover_prob)
+    def __init__(self, prices, risk_matrix, pop_size, p, dirichlet_alpha=0.2, mutation_prob=0.2, crossover_prob=0.8):
+        super().__init__(
+            prices, 
+            risk_matrix, 
+            pop_size, 
+            n_objectives=2, 
+            p=p, 
+            dirichlet_alpha=dirichlet_alpha, 
+            mutation_prob=mutation_prob, 
+            crossover_prob=crossover_prob, 
+            directions=[+1, -1]
+        )
 
     def generate_reference_points(self):
         ref_points = []
@@ -64,7 +74,7 @@ class NSGAIIITwoObjectives(NSGAIII):
                     [start_r, start_r + vec_r * scale], 
                     color='red', linestyle='--', alpha=0.2, zorder=1)
 
-        plt.xlim(p_min * 0.9, p_max * 1.1)
+        plt.xlim(p_min, p_max)
         plt.ylim(r_min * 0.9, r_max * 1.1)
         plt.title(title)
         plt.ylabel('Risk [min]')
