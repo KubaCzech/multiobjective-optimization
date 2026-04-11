@@ -2,20 +2,40 @@ import matplotlib.pyplot as plt
 import numpy as np
 import plotly.graph_objects as go
 
+from ..nsga import CrossoverMethod, MutationMethod
 from .nsga_iii import NSGAIII
 
 class NSGAIIIThreeObjectives(NSGAIII):
-    def __init__(self, prices, risk_matrix, eps, pop_size, p, dirichlet_alpha=0.2, mutation_prob=0.2, crossover_prob=0.8, elitism=True):
+    def __init__(
+            self, 
+            prices, 
+            risk_matrix, 
+            eps, 
+            pop_size, 
+            p, 
+            dirichlet_alpha=0.2, 
+            mutation_prob=0.2, 
+            crossover_prob=0.8, 
+            mutation_method=MutationMethod.polynomial, 
+            crossover_method=CrossoverMethod.SBX,
+            eta_c=1.5,
+            eta_m=1.3,
+            elitism=True
+            ):
         super().__init__(
             prices, 
             risk_matrix, 
             pop_size, 
-            n_objectives=3, 
+            n_objectives=2, 
             p=p, 
             dirichlet_alpha=dirichlet_alpha, 
             mutation_prob=mutation_prob, 
             crossover_prob=crossover_prob, 
             directions=[+1, -1, +1],
+            crossover_method=crossover_method,
+            mutation_method=mutation_method,
+            eta_m=eta_m,
+            eta_c=eta_c,
             elitism=elitism
         )
         self.eps = eps
@@ -42,7 +62,7 @@ class NSGAIIIThreeObjectives(NSGAIII):
         return price, risk, diversity_coeff
 
 
-    def plot_pareto_front(self, title='Pareto Front - Price vs Risk vs Diversity Coefficient'):
+    def plot_pareto_front(self, title='Price vs Risk vs Diversity Coefficient Pareto Front (NSGA-III for Two Objectives)'):
         prices = [score[0] for score in self.scores]
         risks = [score[1] for score in self.scores]
         diversities = [score[2] for score in self.scores]

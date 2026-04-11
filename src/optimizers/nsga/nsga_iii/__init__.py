@@ -1,0 +1,2 @@
+from .nsga_iii_two_obj import NSGAIIITwoObjectives
+from .nsga_iii_three_obj import NSGAIIIThreeObjectives

@@ -1,10 +1,25 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+from ..nsga import CrossoverMethod, MutationMethod
 from .nsga_iii import NSGAIII
 
 class NSGAIIITwoObjectives(NSGAIII):
-    def __init__(self, prices, risk_matrix, pop_size, p, dirichlet_alpha=0.2, mutation_prob=0.2, crossover_prob=0.8, elitism=True):
+    def __init__(
+            self, 
+            prices, 
+            risk_matrix, 
+            pop_size, 
+            p, 
+            dirichlet_alpha=0.2,
+            mutation_prob=0.2,
+            crossover_prob=0.8, 
+            crossover_method = CrossoverMethod.SBX, 
+            mutation_method = MutationMethod.polynomial,
+            eta_c=1.5,
+            eta_m=1.3,
+            elitism=True
+        ):
         super().__init__(
             prices, 
             risk_matrix, 
@@ -15,11 +30,21 @@ class NSGAIIITwoObjectives(NSGAIII):
             mutation_prob=mutation_prob, 
             crossover_prob=crossover_prob, 
             directions=[+1, -1],
+            crossover_method=crossover_method,
+            mutation_method=mutation_method,
+            eta_m=eta_m,
+            eta_c=eta_c,
             elitism=elitism
         )
 
     def on_before_normalization(self, temp_scores):
-        temp_scores[:, 1] = np.sqrt(temp_scores[:, 1])
+        # standarize price and log risk
+        # mu = np.mean(temp_scores[:, 0])
+        # std = np.std(temp_scores[:, 0]) + 1e-9
+        # temp_scores[:, 0] = (temp_scores[:, 0] - mu) / std
+        
+        # temp_scores[:, 1] = -np.log10(temp_scores[:, 1])
+        temp_scores[:, 1] = temp_scores[:, 1] * 1000
         return temp_scores
 
     def dominates(self, sol1, sol2):
@@ -36,7 +61,7 @@ class NSGAIIITwoObjectives(NSGAIII):
         price = sol @ self.prices
         return price, risk
 
-    def plot_pareto_front(self, title='Pareto Front - Price vs Risk'):
+    def plot_pareto_front(self, title='Price vs Risk Pareto Front (NSGA-III for Two Objectives)'):
         prices = [score[0] for score in self.scores]
         risks = [score[1] for score in self.scores]
 

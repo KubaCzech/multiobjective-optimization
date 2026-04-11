@@ -1,5 +1,5 @@
-from .ecm import EpsilonConstraintMethodOptimizer
-from .wsm import WeightedSumMethodOptimizer
+from .classical_methods import EpsilonConstraintMethodOptimizer, WeightedSumMethodOptimizer
 
-from .nsga_iii_two_obj import NSGAIIITwoObjectives
-from .nsga_iii_three_obj import NSGAIIIThreeObjectives
+from .nsga import CrossoverMethod, MutationMethod
+from .nsga import NSGAIITwoObjectives, NSGAIIThreeObjectives
+from .nsga import NSGAIIITwoObjectives, NSGAIIIThreeObjectives
