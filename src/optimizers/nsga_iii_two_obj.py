@@ -1,11 +1,10 @@
-from itertools import combinations
 import matplotlib.pyplot as plt
 import numpy as np
 
 from .nsga_iii import NSGAIII
 
 class NSGAIIITwoObjectives(NSGAIII):
-    def __init__(self, prices, risk_matrix, pop_size, p, dirichlet_alpha=0.2, mutation_prob=0.2, crossover_prob=0.8):
+    def __init__(self, prices, risk_matrix, pop_size, p, dirichlet_alpha=0.2, mutation_prob=0.2, crossover_prob=0.8, elitism=True):
         super().__init__(
             prices, 
             risk_matrix, 
@@ -15,23 +14,13 @@ class NSGAIIITwoObjectives(NSGAIII):
             dirichlet_alpha=dirichlet_alpha, 
             mutation_prob=mutation_prob, 
             crossover_prob=crossover_prob, 
-            directions=[+1, -1]
+            directions=[+1, -1],
+            elitism=elitism
         )
 
-    def generate_reference_points(self):
-        ref_points = []
-        # Das-Dennis method (Stars and Bars)
-        for combo in combinations(range(self.p + self.n_objectives - 1), self.n_objectives - 1):
-            combo = [-1] + list(combo) + [self.p + self.n_objectives - 1]
-            
-            point = []
-            for i in range(len(combo) - 1):
-                val = (combo[i+1] - combo[i] - 1) / self.p
-                point.append(val)
-            
-            ref_points.append(point)
-            
-        return np.array(ref_points)
+    def on_before_normalization(self, temp_scores):
+        temp_scores[:, 1] = np.sqrt(temp_scores[:, 1])
+        return temp_scores
 
     def dominates(self, sol1, sol2):
         eval1 = self.fitness_function(sol1)
@@ -57,25 +46,21 @@ class NSGAIIITwoObjectives(NSGAIII):
         p_min, p_max = min(prices), max(prices)
         r_min, r_max = min(risks), max(risks)
 
+        utopia_p = p_max 
+        utopia_r = r_min
+
         scale = 2.0 
 
-        # (Utopia Point) -> p_max, r_min
-        start_p = p_max
-        start_r = r_min
-
         for pt in self.reference_points:
-            target_p = p_min + pt[0] * (p_max - p_min)
-            target_r = r_min + pt[1] * (r_max - r_min)
+            vec_p = -pt[0] * (p_max - p_min)
+            vec_r =  pt[1] * (r_max - r_min)
             
-            vec_p = target_p - start_p
-            vec_r = target_r - start_r
-            
-            plt.plot([start_p, start_p + vec_p * scale], 
-                    [start_r, start_r + vec_r * scale], 
+            plt.plot([utopia_p, utopia_p + vec_p * scale], 
+                    [utopia_r, utopia_r + vec_r * scale], 
                     color='red', linestyle='--', alpha=0.2, zorder=1)
 
         plt.xlim(p_min, p_max)
-        plt.ylim(r_min * 0.9, r_max * 1.1)
+        plt.ylim(r_min, r_max * 1.1)
         plt.title(title)
         plt.ylabel('Risk [min]')
         plt.xlabel('Price')

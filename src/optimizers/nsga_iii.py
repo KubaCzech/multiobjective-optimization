@@ -1,9 +1,7 @@
 import random
 import numpy as np
 from enum import Enum
-
-# TODO: normalizacja przez punkt idealny
-# TODO: elite preservation (elitism)
+from itertools import combinations
 
 class CrossoverMethod(Enum):
     SBX = 'sbx'
@@ -15,6 +13,52 @@ class MutationMethod(Enum):
     polynomial = 'polynomial'
     swap = 'swap'
     flow = 'flow'
+
+class UtopianPointArchive:
+    # Used for normalization
+    def __init__(self, directions):
+        self.directions = directions
+        self.fitness_values = np.array([-np.inf if dir==1 else np.inf for dir in directions])
+
+    @property
+    def utopian_point(self):
+        return self.fitness_values
+
+    def add_solution(self, fitness_vals):
+        fitness_vals = np.array(fitness_vals)
+        self.fitness_values[self.directions == 1] = np.maximum(self.fitness_values[self.directions == 1], fitness_vals[self.directions == 1])
+        self.fitness_values[self.directions == -1] = np.minimum(self.fitness_values[self.directions == -1], fitness_vals[self.directions == -1])
+
+class EliteSolutionsArchive:
+    # Used to preserve best solutions
+    def __init__(self, directions):
+        self.directions = np.array(directions)
+        self.extreme_solutions = [None] * len(directions)
+        self.fitness_values = np.array([[-np.inf if dir==1 else np.inf for dir in directions] for _ in range(len(directions))])
+
+    @property
+    def elite_solutions(self):
+        return [sol for sol in self.extreme_solutions if sol is not None]
+    
+    def dominates(self, fit1, fit2):
+        diff = (fit1 - fit2) * self.directions
+        return np.all(diff >= 0) and np.any(diff > 0)
+            
+    def add_solution(self, sol: list, fitness_vals: list):
+        fit1 = np.array(fitness_vals)
+        for idx, dir in enumerate(self.directions):
+            fit2 = self.fitness_values[idx]
+            domination_flag = self.dominates(fit1, fit2) or (not self.dominates(fit1, fit2) and not self.dominates(fit2, fit1)) # either dominates or non-comparability
+            if dir == 1:
+                if self.fitness_values[idx][idx] < fitness_vals[idx] and domination_flag:
+                    self.extreme_solutions[idx] = sol.copy()
+                    self.fitness_values[idx] = fit1
+            elif dir == -1:
+                if self.fitness_values[idx][idx] > fitness_vals[idx] and domination_flag:
+                    self.extreme_solutions[idx] = sol.copy()
+                    self.fitness_values[idx] = fit1
+            else:
+                raise ValueError
 
 class NSGAIII:
     def __init__(
@@ -50,9 +94,12 @@ class NSGAIII:
         self.crossover_prob = crossover_prob
         self.mutation_method = mutation_method
         self.crossover_method = crossover_method
+
         if elitism:
-            self.best_overall = [None for _ in n_objectives]
+            self.elite_solutions_archive = EliteSolutionsArchive(directions)
         self.elitism = elitism
+        self.utopian_point_archive = UtopianPointArchive(directions)
+        self.nadir_point = []
 
         self.reference_points = self.generate_reference_points()
         self.create_initial_population()
@@ -61,7 +108,19 @@ class NSGAIII:
         return self.population
 
     def generate_reference_points(self):
-        pass
+        ref_points = []
+        # Das-Dennis method (Stars and Bars)
+        for combo in combinations(range(self.p + self.n_objectives - 1), self.n_objectives - 1):
+            combo = [-1] + list(combo) + [self.p + self.n_objectives - 1]
+            
+            point = []
+            for i in range(len(combo) - 1):
+                val = (combo[i+1] - combo[i] - 1) / self.p
+                point.append(val)
+            
+            ref_points.append(point)
+            
+        return np.array(ref_points)
 
     def create_random_kraemer_solution(self):
         cuts = np.random.rand(self.n - 1)
@@ -107,7 +166,7 @@ class NSGAIII:
         return sol
     
     def mutation_polynomial(self, sol):
-        eta_m = 10
+        eta_m = 1.3
         sol = np.copy(sol)
         for i in range(self.n):
             if random.random() < (1.0 / self.n):
@@ -138,12 +197,12 @@ class NSGAIII:
 
     def crossover_sbx(self, sol1, sol2):
         # SBX - Simulated Binary Crossover
-        eta_c = 20
+        eta_c = 1.5
         child1 = np.zeros(self.n)
         child2 = np.zeros(self.n)
         
         for i in range(self.n):
-            if random.random() <= 0.5:
+            if random.random() <= 0.9:
                 if abs(sol1[i] - sol2[i]) > 1e-9:
                     u = random.random()
                     beta = (2 * u)**(1.0/(eta_c + 1)) if u <= 0.5 else (1.0/(2*(1-u)))**(1.0/(eta_c + 1))
@@ -156,10 +215,12 @@ class NSGAIII:
 
         # Additive correction
         def repair(child):
-            child = np.maximum(child, 1e-6) # eps
-            diff = np.sum(child) - 1.0
-            child -= diff / self.n
-            return np.maximum(child, 1e-6) / np.sum(np.maximum(child, 1e-6))
+            child = np.maximum(child, 0)
+            s = np.sum(child)
+            # If sum == 0, we assign equal weights -> highly unlikely
+            if s < 1e-12:
+                return np.full(self.n, 1.0 / self.n)
+            return child / s
 
         return repair(child1), repair(child2)
     
@@ -190,10 +251,10 @@ class NSGAIII:
         self.scores = []
         for sol in self.population:
             score = self.fitness_function(sol)
+            self.utopian_point_archive.add_solution(score)
+            if self.elitism:
+                self.elite_solutions_archive.add_solution(sol, list(score))
             self.scores.append(score)
-        self.scores = np.array(self.scores)
-        if self.elitism:
-            pass # TODO
 
     def dominates(self, sol1, sol2):
         # to be overridden in subclass
@@ -204,9 +265,6 @@ class NSGAIII:
         domination_counts = [0] * n
         dominated_solutions = [set() for _ in range(n)]
         fronts = [[]]
-
-        if self.elitism:
-            pass # TODO - preserve best solutions
 
         # Calculate domination relations
         for i in range(n):
@@ -235,23 +293,33 @@ class NSGAIII:
                 fronts.append(next_front)
             else:
                 break
-
         return fronts
+    
+    def on_before_normalization(self, temp_scores):
+        return temp_scores
 
     def normalize_population(self):
         # Normalize the population's objective values to [0, 1] range for niching.
         # Raw scores are preserved in self.scores for plotting and domination checks.
         # Maximized objectives are flipped so all objectives become minimized,
         # placing the ideal point at (0, 0, ...) as required by NSGA-III reference point geometry.
-        # TODO - normalize by ideal point
+        temp_scores = self.on_before_normalization(np.copy(self.scores))
         scores_array = np.zeros_like(self.scores)
-        min_scores = np.min(self.scores, axis=0)
-        max_scores = np.max(self.scores, axis=0)
+        ideal_point = self.on_before_normalization(self.utopian_point_archive.utopian_point.reshape(1, -1)).flatten()
+
+        min_scores = np.min(temp_scores, axis=0)
+        max_scores = np.max(temp_scores, axis=0).reshape(-1, 1)
+
         for dim in range(scores_array.shape[1]):
+            z_ideal = ideal_point[dim]
+            z_nadir = max_scores[dim] if self.directions[dim] == -1 else min_scores[dim]
+
+            denom = abs(z_ideal - z_nadir) + 1e-9
+
             if self.directions[dim] == 1:
-                normalized = (max_scores[dim] - self.scores[:, dim])/(max_scores[dim] - min_scores[dim] + 1e-9)
+                normalized = (z_ideal - temp_scores[:, dim]) / denom
             elif self.directions[dim] == -1:
-                normalized = (self.scores[:, dim] - min_scores[dim])/(max_scores[dim] - min_scores[dim] + 1e-9)
+                normalized = (temp_scores[:, dim] - z_ideal)/denom
             else:
                 raise ValueError
             scores_array[:, dim] = normalized
@@ -363,8 +431,9 @@ class NSGAIII:
 
     def evolve(self, nr_of_iterations):
         for it_number in range(nr_of_iterations):
-            if (it_number+1) % 50 == 0:
+            if (it_number+1) % 100 == 0:
                 print(f"Iteration {it_number+1}/{nr_of_iterations}")
+                self.plot_pareto_front()
             new_population = []
             while len(new_population) < self.pop_size:
                 parent1, parent2 = random.sample(self.population, 2)
@@ -374,6 +443,13 @@ class NSGAIII:
 
             self.population.extend(new_population)
             self.evaluate_population()
+
+            if self.elitism:
+                elite = self.elite_solutions_archive.elite_solutions
+                for sol in elite:
+                    self.population.append(sol)
+                    self.scores.append(self.fitness_function(sol))
+            self.scores = np.array(self.scores)
 
             fronts = self.find_pareto_fronts()
             self.normalize_population()
