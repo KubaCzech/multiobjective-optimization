@@ -25,6 +25,7 @@ RUN pip3 install \
     cvxopt \
     tensorflow \
     scikit-learn \
+    pymoo \
     --break-system-packages
 
 # 4. Konfiguracja silnika Julii i PySR
