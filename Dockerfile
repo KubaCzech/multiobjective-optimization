@@ -18,13 +18,12 @@ RUN pip3 install \
     jupyter \
     ipykernel \
     matplotlib \
+    seaborn \
     scipy \
     lmfit \
     gplearn \
     plotly \
     cvxopt \
-    tensorflow \
-    scikit-learn \
     pymoo \
     --break-system-packages
 
