@@ -76,14 +76,10 @@ class MultiObjectiveOptimizer:
         pass
 
     def plot_pareto_front(self):
-        if not self.is_normalized:
-            self.normalize()
-            self.is_normalized = True
-
         plt.figure(figsize=(8, 5))
         plt.plot(
-            [i[1] for i in self.pareto_front_normalized], 
-            [i[0] for i in self.pareto_front_normalized],
+            [i[1] for i in self.pareto_front], 
+            [i[0] for i in self.pareto_front],
             'b.-', markersize=10, label='Pareto Optimal Solutions'
         )
         plt.title(f'Pareto Front: Risk vs. Gain ({self.method_name})')
