@@ -23,6 +23,8 @@ RUN pip3 install \
     gplearn \
     plotly \
     cvxopt \
+    tensorflow \
+    scikit-learn \
     --break-system-packages
 
 # 4. Konfiguracja silnika Julii i PySR
