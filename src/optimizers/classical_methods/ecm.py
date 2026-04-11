@@ -47,7 +47,7 @@ class EpsilonConstraintMethodOptimizer(MultiObjectiveOptimizer):
         super().plot_pareto_front()
         if self.method_name == OptimizerType.ECM.value:
             for eps in self.epsilons:
-                plt.axvline(x=(eps - self.f2_min)/(self.f2_max - self.f2_min), color='r', linestyle='--')
+                plt.axvline(x=eps, color='r', linestyle='--')
         plt.show()
 
     def choose_strategy(self, arg):
