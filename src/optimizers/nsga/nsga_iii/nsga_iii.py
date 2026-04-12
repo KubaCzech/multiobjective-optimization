@@ -51,6 +51,8 @@ class NSGAIII:
         self.utopian_point_archive = UtopianPointArchive(directions)
         self.nadir_point = []
 
+        self.history = [] # for each generation: (return, risk, optionally: div_coeff, solution)
+
         self.reference_points = self.generate_reference_points()
         self.create_initial_population()
 
@@ -379,9 +381,13 @@ class NSGAIII:
 
         return population, scores
 
-    def evolve(self, nr_of_iterations, plot=False):
+    def evolve(self, nr_of_iterations, plot=False, log_after=25):
+        if not log_after and plot:
+            raise ValueError
         for it_number in range(nr_of_iterations):
-            if (it_number+1) % 100 == 0:
+            if not log_after:
+                pass
+            elif (it_number+1) % log_after == 0:
                 print(f"Iteration {it_number+1}/{nr_of_iterations}")
                 if plot:
                     self.plot_pareto_front(title = f'Pareto front in {it_number+1} iteration')
@@ -406,7 +412,9 @@ class NSGAIII:
             self.normalize_population()
 
             self.population, self.scores = self.choose_new_population(fronts)
-        return self.population
+            self.history.append(self.scores)
+
+        return self.history
 
     def normalize_pareto_front(self):
         # to be overriden in subclass

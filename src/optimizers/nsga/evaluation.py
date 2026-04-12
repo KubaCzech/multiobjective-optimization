@@ -22,26 +22,15 @@ def inverted_generational_distance(p, p_star):
         
     return np.sqrt(np.sum(distances)) / len(p_star)
 
-def nadir_point(scores):
-    nadir = np.zeros(scores.shape[1])
+def nadir_point(dim):
+    return np.array([1.1 for _ in range(dim)])
 
-    for idx in range(scores.shape[1]):
-        val = np.max(scores[:, idx])
-        nadir[idx] = val + abs(val * 0.01) + 1e-6
-    return nadir
+def normalize_scores(scores, f_min, f_max):
+    return (scores - f_min) / (f_max - f_min + 1e-10)
 
-def hypervolume(scores, directions, nadir_p = None):
-    # Logic: if we know the nadir -> use it, else -> calculate it
-    # TODO: a moze lepiej zawsze przyjac reference point jako (1.1)^N
-    # TODO: trzeba pomyslec jak zrobic normalizacje i kiedy (w funkcji czy przed)
-    scores_ = np.array(scores) * np.array(directions)
-    if nadir_p is None:
-        nadir = nadir_point(scores_)
-    else:
-        nadir = nadir_p
-
-    indicator = HV(ref_point=nadir) 
-    return indicator(scores_)
+def hypervolume(scores, ref_point):
+    scores_ = np.array(scores)
+    return HV(ref_point=ref_point)(scores_)
 
 def sensitivity_analysis_plot(params1: list, params2: list, scores: list, names: list):
     # x -> generations
@@ -73,7 +62,7 @@ def sensitivity_analysis_plot(params1: list, params2: list, scores: list, names:
 def average_convergence_plot(history, title="Average Convergence Plot"):
     mean_scores = np.mean(history, axis=1)
     std_scores = np.std(history, axis=1)
-    generations = np.arange(len(mean_scores))
+    generations = np.arange(len(mean_scores)) + 1
 
     plt.figure(figsize=(10, 6))
     plt.plot(generations, mean_scores, label='Mean Metric', color='blue')

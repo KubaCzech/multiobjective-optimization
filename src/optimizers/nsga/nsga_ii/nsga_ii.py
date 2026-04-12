@@ -41,6 +41,8 @@ class NSGAII:
             self.elite_solutions_archive = EliteSolutionsArchive(directions)
         self.elitism = elitism
 
+        self.history = [] # for each generation: (return, risk, optionally: div_coeff, solution)
+
         self.create_initial_population()
 
     def get_population(self):
@@ -286,14 +288,18 @@ class NSGAII:
     # Main loop
     # -------------------------------------------------------------------------
 
-    def evolve(self, nr_of_iterations, plot=False):
+    def evolve(self, nr_of_iterations, plot=False, log_after=25):
+        if not log_after and plot:
+            raise ValueError
         self.evaluate_population()
 
         for it_number in range(nr_of_iterations):
-            if (it_number + 1) % 100 == 0:
-                print(f"Iteration {it_number + 1}/{nr_of_iterations}")
+            if not log_after:
+                pass
+            elif (it_number+1) % log_after == 0:
+                print(f"Iteration {it_number+1}/{nr_of_iterations}")
                 if plot:
-                    self.plot_pareto_front(title=f'Pareto front - iteration {it_number + 1}')
+                    self.plot_pareto_front(title = f'Pareto front in {it_number+1} iteration')
 
             # Rank and crowding distance over P_t for tournament
             fronts = self.find_pareto_fronts()
@@ -325,8 +331,9 @@ class NSGAII:
             # Select P_{t+1} from R_t
             fronts = self.find_pareto_fronts()
             self.population, self.scores = self.choose_new_population(fronts)
+            self.history.append(self.scores)
 
-        return self.population
+        return self.history
 
     # -------------------------------------------------------------------------
     # Plotting
