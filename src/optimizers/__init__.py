@@ -9,7 +9,8 @@ from .nsga import (
     hypervolume, 
     sensitivity_analysis_plot,
     average_convergence_plot,
-    normalize_scores
+    normalize_scores,
+    plot_multiple_2d_populations
 )
 from .nsga import NSGAIITwoObjectives, NSGAIIThreeObjectives
 from .nsga import NSGAIIITwoObjectives, NSGAIIIThreeObjectives

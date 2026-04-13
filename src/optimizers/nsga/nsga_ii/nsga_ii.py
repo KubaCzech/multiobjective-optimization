@@ -175,7 +175,7 @@ class NSGAII:
         return sol
 
     def mutation_polynomial(self, sol):
-        eta_m = 1.3
+        eta_m = 15
         sol = np.copy(sol)
         for i in range(self.n):
             if random.random() < (1.0 / self.n):
@@ -201,7 +201,7 @@ class NSGAII:
         return child1 / child1.sum(), child2 / child2.sum()
 
     def crossover_sbx(self, sol1, sol2):
-        eta_c = 1.5
+        eta_c = 5
         child1 = np.zeros(self.n)
         child2 = np.zeros(self.n)
 

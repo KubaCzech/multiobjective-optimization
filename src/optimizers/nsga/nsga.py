@@ -58,3 +58,6 @@ class EliteSolutionsArchive:
                     self.fitness_values[idx] = fit1
             else:
                 raise ValueError
+            
+class GlobalNadirPoint:
+    pass

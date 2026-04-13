@@ -18,8 +18,8 @@ class NSGAIII:
             crossover_prob=0.8, 
             crossover_method=CrossoverMethod.SBX,
             mutation_method=MutationMethod.polynomial,
-            eta_c=1.5,
-            eta_m=1.3,
+            eta_c=5,
+            eta_m=20,
             directions=None, 
             elitism=True
         ):

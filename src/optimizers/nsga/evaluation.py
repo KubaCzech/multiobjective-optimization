@@ -32,20 +32,20 @@ def hypervolume(scores, ref_point):
     scores_ = np.array(scores)
     return HV(ref_point=ref_point)(scores_)
 
-def sensitivity_analysis_plot(params1: list, params2: list, scores: list, names: list):
+def sensitivity_analysis_plot(params1: list, params2: list, scores: list, names: list, algo_name: str):
     # x -> generations
     # y -> population sizes
     n = len(params1)
     m = len(params2)
     scores_ = np.array(scores).reshape((m, n))
 
-    plt.imshow(scores_, cmap='inferno', interpolation='nearest', aspect='auto')
+    plt.imshow(scores_, interpolation='nearest', aspect='auto')
 
     plt.xticks(np.arange(len(params1)), params1, rotation=45)
     plt.yticks(np.arange(len(params2)), params2)
 
     plt.colorbar(label='Hypervolume')
-    plt.title(f'Sensitivity analysis of {names[0]} vs {names[1]}')
+    plt.title(f'Sensitivity analysis of {names[0]} vs {names[1]} for {algo_name}')
     plt.xlabel(names[0])
     plt.ylabel(names[1])
 
@@ -72,7 +72,32 @@ def average_convergence_plot(history, title="Average Convergence Plot"):
 
     plt.title(title)
     plt.xlabel("Generation")
-    plt.ylabel("Metric Value (e.g. Hypervolume)")
+    plt.ylabel("Hypervolume")
     plt.grid(True, linestyle='--', alpha=0.6)
     plt.legend()
+    plt.show()
+
+def plot_multiple_2d_populations(pop1, pop2, pop_names):
+    pts_a = np.array(pop1)
+    pts_b = np.array(pop2)
+
+    plt.figure(figsize=(10, 6))
+
+    plt.scatter(pts_a[:, 0], pts_a[:, 1], 
+                c='#1f77b4', marker='o', alpha=0.5, s=40, label=pop_names[0])
+
+    plt.scatter(pts_b[:, 0], pts_b[:, 1], 
+                c='#ff7f0e', marker='x', alpha=0.5, s=40, label=pop_names[1])
+
+    
+    plt.title(f'{pop_names[0]} and {pop_names[1]} populations comparison', fontsize=14)
+    
+    plt.xlabel('Expected Return [$\max$]', fontsize=12)
+    plt.ylabel('Risk [$\min$]', fontsize=12)
+    
+    plt.grid(True, linestyle='--', alpha=0.5)
+    
+    plt.legend(loc='best', fontsize=11)
+
+    plt.tight_layout()
     plt.show()
