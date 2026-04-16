@@ -12,24 +12,26 @@ class NSGAIITwoObjectives(NSGAII):
             risk_matrix,
             pop_size,
             dirichlet_alpha=0.2,
-            mutation_prob=0.2,
             crossover_prob=0.8,
+            mutation_prob=0.2,
+            eta_c=5,
+            eta_m=15,
             crossover_method=CrossoverMethod.SBX,
             mutation_method=MutationMethod.polynomial,
-            elitism=True
         ):
         super().__init__(
-            prices,
-            risk_matrix,
-            pop_size,
+            prices=prices,
+            risk_matrix=risk_matrix,
+            pop_size=pop_size,
             n_objectives=2,
             dirichlet_alpha=dirichlet_alpha,
-            mutation_prob=mutation_prob,
             crossover_prob=crossover_prob,
+            mutation_prob=mutation_prob,
+            eta_c=eta_c,
+            eta_m=eta_m,
             crossover_method=crossover_method,
             mutation_method=mutation_method,
             directions=[+1, -1],
-            elitism=elitism
         )
 
     def fitness_function(self, sol):
@@ -53,6 +55,7 @@ class NSGAIITwoObjectives(NSGAII):
 
         plt.figure(figsize=(5, 5))
         plt.scatter(prices, risks, c='blue', marker='o')
+        
         plt.title(title)
         plt.xlabel('Price [max]')
         plt.ylabel('Risk [min]')

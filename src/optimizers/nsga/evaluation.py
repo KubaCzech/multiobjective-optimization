@@ -1,4 +1,6 @@
 import numpy as np
+import pandas as pd
+import seaborn as sns
 import matplotlib.pyplot as plt
 from pymoo.indicators.hv import HV
 
@@ -38,24 +40,24 @@ def sensitivity_analysis_plot(params1: list, params2: list, scores: list, names:
     n = len(params1)
     m = len(params2)
     scores_ = np.array(scores).reshape((m, n))
+    
+    df = pd.DataFrame(scores_, index=params2, columns=params1)
 
-    plt.imshow(scores_, interpolation='nearest', aspect='auto')
+    plt.figure(figsize=(10, 8))
+        
+    ax = sns.heatmap(df, 
+                     annot=True, 
+                     fmt=".3f", 
+                     cmap="Blues", 
+                     cbar_kws={'label': 'Hypervolume'},
+                     linewidths=.5)
 
-    plt.xticks(np.arange(len(params1)), params1, rotation=45)
-    plt.yticks(np.arange(len(params2)), params2)
-
-    plt.colorbar(label='Hypervolume')
-    plt.title(f'Sensitivity analysis of {names[0]} vs {names[1]} for {algo_name}')
+    plt.title(f'Sensitivity analysis: {names[0]} vs {names[1]} for {algo_name}', pad=20)
     plt.xlabel(names[0])
     plt.ylabel(names[1])
-
-    threshold = scores_.max() / 2.
-    for i in range(m):
-        for j in range(n):
-            color = "white" if scores_[i, j] < threshold else "black"
-            plt.text(j, i, f"{scores_[i, j]:.3f}", 
-                    ha="center", va="center", color=color, fontsize=9)
-
+    
+    plt.xticks(rotation=45)
+    
     plt.tight_layout()
     plt.show()
 
