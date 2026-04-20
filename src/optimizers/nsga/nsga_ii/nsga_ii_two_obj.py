@@ -7,18 +7,18 @@ from .nsga_ii import NSGAII
 
 class NSGAIITwoObjectives(NSGAII):
     def __init__(
-            self,
-            prices,
-            risk_matrix,
-            pop_size,
-            dirichlet_alpha=0.2,
-            crossover_prob=0.8,
-            mutation_prob=0.2,
-            eta_c=5,
-            eta_m=15,
-            crossover_method=CrossoverMethod.SBX,
-            mutation_method=MutationMethod.polynomial,
-        ):
+        self,
+        prices,
+        risk_matrix,
+        pop_size,
+        dirichlet_alpha=0.2,
+        crossover_prob=0.8,
+        mutation_prob=0.2,
+        eta_c=5,
+        eta_m=15,
+        crossover_method=CrossoverMethod.SBX,
+        mutation_method=MutationMethod.polynomial,
+    ):
         super().__init__(
             prices=prices,
             risk_matrix=risk_matrix,
@@ -55,7 +55,7 @@ class NSGAIITwoObjectives(NSGAII):
 
         plt.figure(figsize=(5, 5))
         plt.scatter(prices, risks, c='blue', marker='o')
-        
+
         plt.title(title)
         plt.xlabel('Price [max]')
         plt.ylabel('Risk [min]')

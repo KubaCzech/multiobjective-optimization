@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.linear_model import LinearRegression
 
+
 def estimate_price_linear_regression(x_data, y_data):
     x_data = x_data.reshape(-1, 1)
     model = LinearRegression()

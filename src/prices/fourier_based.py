@@ -2,19 +2,21 @@ import numpy as np
 from lmfit import Model, Parameters
 from scipy.fft import rfft, rfftfreq
 
+
 def sines_with_trend_model(x, offset, slope, **params):
-        # Possible improvement - try A * sin(B * t**2 + C * t + D) instead of A * sin(B * t + C)
-        y = (slope * x) + offset # Added linear trend back in
-    
-        # We find how many 'a' parameters exist to know the count of sines
-        n = sum(1 for k in params.keys() if k.startswith('a'))
-        
-        for i in range(1, n + 1):
-            a = params[f'a{i}']
-            f = params[f'f{i}']
-            p = params[f'p{i}']
-            y += a * np.sin(f * x + p)
-        return np.where(y > 50, y, np.log(1 + np.exp(y)))
+    # Possible improvement - try A * sin(B * t**2 + C * t + D) instead of A * sin(B * t + C)
+    y = (slope * x) + offset  # Added linear trend back in
+
+    # We find how many 'a' parameters exist to know the count of sines
+    n = sum(1 for k in params.keys() if k.startswith('a'))
+
+    for i in range(1, n + 1):
+        a = params[f'a{i}']
+        f = params[f'f{i}']
+        p = params[f'p{i}']
+        y += a * np.sin(f * x + p)
+    return np.where(y > 50, y, np.log(1 + np.exp(y)))
+
 
 def estimate_price_sum_of_sines(x_data, y_data, n_sines):
     """
@@ -48,10 +50,10 @@ def estimate_price_sum_of_sines(x_data, y_data, n_sines):
     # 3. Create the Model
     gmodel = Model(sines_with_trend_model)
     params = Parameters()
-    
+
     params.add('offset', value=intercept_guess)
     params.add('slope', value=slope_guess)
-    
+
     # 4. Add N sine parameters dynamically
     for i in range(1, n_sines + 1):
         idx = i - 1

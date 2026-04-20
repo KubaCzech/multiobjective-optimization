@@ -5,22 +5,23 @@ from ..nsga import CrossoverMethod, MutationMethod, NSGA
 
 # mutacja: wrzucasz wage assetow po rowno do niezerowych wektorow
 
+
 class NSGAII(NSGA):
     def __init__(
-            self,
-            prices,
-            risk_matrix,
-            pop_size,
-            n_objectives,
-            dirichlet_alpha=0.2,
-            crossover_prob=0.8,
-            mutation_prob=0.2,
-            eta_c=5,
-            eta_m=15,
-            crossover_method=CrossoverMethod.SBX,
-            mutation_method=MutationMethod.polynomial, 
-            directions = None,
-        ):
+        self,
+        prices,
+        risk_matrix,
+        pop_size,
+        n_objectives,
+        dirichlet_alpha=0.2,
+        crossover_prob=0.8,
+        mutation_prob=0.2,
+        eta_c=5,
+        eta_m=15,
+        crossover_method=CrossoverMethod.SBX,
+        mutation_method=MutationMethod.polynomial,
+        directions=None,
+    ):
         super().__init__(
             prices=prices,
             risk_matrix=risk_matrix,
@@ -33,8 +34,7 @@ class NSGAII(NSGA):
             eta_m=eta_m,
             crossover_method=crossover_method,
             mutation_method=mutation_method,
-            directions=directions
-
+            directions=directions,
         )
 
     def crowding_distance_assignment(self, front_indices):
@@ -63,9 +63,7 @@ class NSGAII(NSGA):
                 continue
 
             for k in range(1, n - 1):
-                distances[sorted_pos[k]] += (
-                    scores[sorted_pos[k + 1], obj] - scores[sorted_pos[k - 1], obj]
-                ) / denom
+                distances[sorted_pos[k]] += (scores[sorted_pos[k + 1], obj] - scores[sorted_pos[k - 1], obj]) / denom
 
         return distances
 
@@ -113,10 +111,10 @@ class NSGAII(NSGA):
         for it_number in range(nr_of_iterations):
             if not log_after:
                 pass
-            elif (it_number+1) % log_after == 0:
+            elif (it_number + 1) % log_after == 0:
                 print(f"Iteration {it_number+1}/{nr_of_iterations}")
                 if plot:
-                    self.plot_pareto_front(title = f'Pareto front in {it_number+1} iteration')
+                    self.plot_pareto_front(title=f'Pareto front in {it_number+1} iteration')
 
             # Rank and crowding distance over P_t for tournament
             fronts = self.find_pareto_fronts()

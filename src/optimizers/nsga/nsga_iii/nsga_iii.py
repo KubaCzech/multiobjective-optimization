@@ -5,23 +5,24 @@ from itertools import combinations
 
 from ..nsga import UtopianPointArchive, NSGA, project_onto_simplex
 
+
 class NSGAIII(NSGA):
     def __init__(
-            self, 
-            prices, 
-            risk_matrix, 
-            pop_size, 
-            n_objectives, 
-            p, 
-            dirichlet_alpha, 
-            crossover_prob, 
-            mutation_prob,
-            eta_c,
-            eta_m, 
-            crossover_method,
-            mutation_method,
-            directions, 
-        ):
+        self,
+        prices,
+        risk_matrix,
+        pop_size,
+        n_objectives,
+        p,
+        dirichlet_alpha,
+        crossover_prob,
+        mutation_prob,
+        eta_c,
+        eta_m,
+        crossover_method,
+        mutation_method,
+        directions,
+    ):
         super().__init__(
             prices=prices,
             risk_matrix=risk_matrix,
@@ -34,8 +35,7 @@ class NSGAIII(NSGA):
             eta_m=eta_m,
             crossover_method=crossover_method,
             mutation_method=mutation_method,
-            directions=directions
-
+            directions=directions,
         )
         self.normalized_scores = []
 
@@ -51,14 +51,14 @@ class NSGAIII(NSGA):
         # Das-Dennis method (Stars and Bars)
         for combo in combinations(range(self.p + self.n_objectives - 1), self.n_objectives - 1):
             combo = [-1] + list(combo) + [self.p + self.n_objectives - 1]
-            
+
             point = []
             for i in range(len(combo) - 1):
-                val = (combo[i+1] - combo[i] - 1) / self.p
+                val = (combo[i + 1] - combo[i] - 1) / self.p
                 point.append(val)
-            
+
             ref_points.append(point)
-            
+
         return np.array(ref_points)
 
     def evaluate_population(self):
@@ -93,7 +93,7 @@ class NSGAIII(NSGA):
             elif self.directions[dim] == -1:
                 if np.isinf(z_ideal):
                     z_ideal = np.min(temp_scores[:, dim])
-                normalized = (temp_scores[:, dim] - z_ideal)/abs(z_ideal - z_nadir + 1e-9)
+                normalized = (temp_scores[:, dim] - z_ideal) / abs(z_ideal - z_nadir + 1e-9)
             else:
                 raise ValueError
             scores_array[:, dim] = normalized
@@ -103,31 +103,31 @@ class NSGAIII(NSGA):
         # 1. Helper function to associate solutions with reference points based on perpendicular distance
         def associate(scores):
             ref_norms = np.linalg.norm(self.reference_points, axis=1)
-    
+
             scalar_products = np.dot(scores, self.reference_points.T)
             s_norms = np.linalg.norm(scores, axis=1)[:, np.newaxis]
-            
+
             ref_norms[ref_norms == 0] = 1e-10
-            distances = np.sqrt(np.abs(s_norms**2 - (scalar_products / ref_norms)**2))
-            
+            distances = np.sqrt(np.abs(s_norms**2 - (scalar_products / ref_norms) ** 2))
+
             assoc_indices = np.argmin(distances, axis=1)
             assoc_dists = np.min(distances, axis=1)
             return assoc_indices, assoc_dists
 
         # 2. Associate current scores and last front scores with reference points
         niche_counts = np.zeros(len(self.reference_points))
-        
+
         if len(current_scores) > 0:
             current_assoc, _ = associate(current_scores)
             for a in current_assoc:
                 niche_counts[a] += 1
-        
+
         last_assoc, last_dists = associate(last_front_scores)
-        
+
         # 3. Niche selection - choose 'solution_counter' solutions from last_front based on niche counts
         chosen_from_last = []
         available_indices = list(range(len(last_front_scores)))
-        
+
         # Copy niche counts to modify during selection without affecting the original counts
         temp_niche_counts = niche_counts.copy()
 
@@ -136,10 +136,10 @@ class NSGAIII(NSGA):
             min_val = np.min(temp_niche_counts)
             min_indices = np.where(temp_niche_counts == min_val)[0]
             chosen_ref_idx = random.choice(min_indices)
-            
+
             # Find individuals from last_front associated with this specific niche
             candidates = [i for i in available_indices if last_assoc[i] == chosen_ref_idx]
-            
+
             if candidates:
                 if temp_niche_counts[chosen_ref_idx] == 0:
                     # If the niche is empty, we choose the individual closest to the reference vector
@@ -147,23 +147,23 @@ class NSGAIII(NSGA):
                 else:
                     # If the niche has someone already, we choose randomly (for diversity)
                     best_cand_idx = random.choice(candidates)
-                
+
                 chosen_from_last.append(best_cand_idx)
                 available_indices.remove(best_cand_idx)
                 temp_niche_counts[chosen_ref_idx] += 1
             else:
                 # If there is no one in this niche in last_front, we exclude it from the minimum search
                 temp_niche_counts[chosen_ref_idx] = np.inf
-                
+
             # If all niches have become inf, and we still need people, reset the counters
             if np.all(temp_niche_counts == np.inf) and available_indices:
-                temp_niche_counts = niche_counts.copy() + 1e-3 # małe zaburzenie
+                temp_niche_counts = niche_counts.copy() + 1e-3  # małe zaburzenie
 
         return chosen_from_last
 
     def choose_new_population(self, fronts):
         new_population_indices = []
-        
+
         # If possible, add entire fronts until we reach the population size
         for front in fronts:
             if len(new_population_indices) + len(front) <= self.pop_size:
@@ -171,10 +171,12 @@ class NSGAIII(NSGA):
             else:
                 last_front = front
                 break
-        
+
         # If new population is full, return it
         if len(new_population_indices) == self.pop_size:
-            return [self.population[i] for i in new_population_indices], [self.scores[i] for i in new_population_indices]
+            return [self.population[i] for i in new_population_indices], [
+                self.scores[i] for i in new_population_indices
+            ]
 
         # If we have a partially filled population, we need to select from the last front
         solution_counter = self.pop_size - len(new_population_indices)
@@ -201,10 +203,10 @@ class NSGAIII(NSGA):
         for it_number in range(nr_of_iterations):
             if not log_after:
                 pass
-            elif (it_number+1) % log_after == 0:
+            elif (it_number + 1) % log_after == 0:
                 print(f"Iteration {it_number+1}/{nr_of_iterations}")
                 if plot:
-                    self.plot_pareto_front(title = f'Pareto front in {it_number+1} iteration')
+                    self.plot_pareto_front(title=f'Pareto front in {it_number+1} iteration')
             new_population = []
             while len(new_population) < self.pop_size:
                 parent1, parent2 = random.sample(self.population, 2)

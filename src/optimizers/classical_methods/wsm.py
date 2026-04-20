@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from cvxopt import matrix, solvers
 from .multi_objective_optimizer import MultiObjectiveOptimizer, OptimizerType
 
+
 class WeightedSumMethodOptimizer(MultiObjectiveOptimizer):
     def __init__(self, expected_returns, ratios_matrix, n_points=21):
         super().__init__(expected_returns, ratios_matrix, n_points)
@@ -15,8 +16,8 @@ class WeightedSumMethodOptimizer(MultiObjectiveOptimizer):
 
         for w in weights:
             # WSM Combining: Minimize w*(Risk) - (1-w)*(Gain)
-            risk_scale = (self.f1_max - self.f1_min)
-            gain_scale = (self.f2_max - self.f2_min)
+            risk_scale = self.f1_max - self.f1_min
+            gain_scale = self.f2_max - self.f2_min
 
             # We multiply by 2 because cvxopt minimizes (1/2)*x^T P x.
             P_opt = matrix(2 * w * self.P / risk_scale)
@@ -33,7 +34,7 @@ class WeightedSumMethodOptimizer(MultiObjectiveOptimizer):
             self.pareto_front.append((actual_risk, actual_gain, x))
         self.weights = weights
         return self.pareto_front, weights
-    
+
     def plot_pareto_front(self):
         super().plot_pareto_front()
         plt.show()
