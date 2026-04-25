@@ -141,7 +141,7 @@ class NSGAII(NSGA):
             # R_t = P_t ∪ Q_t, evaluate R_t
             self.population = list(self.population) + offspring
             self.evaluate_population()
-            self.scores = np.array(self.scores)
+            # self.scores = np.array(self.scores)
 
             # Select P_{t+1} from R_t
             fronts = self.find_pareto_fronts()

@@ -217,7 +217,7 @@ class NSGAIII(NSGA):
             self.population.extend(new_population)
             self.evaluate_population()
 
-            self.scores = np.array(self.scores)
+            # self.scores = np.array(self.scores)
 
             fronts = self.find_pareto_fronts()
             self.normalize_population()

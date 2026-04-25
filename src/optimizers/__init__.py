@@ -14,3 +14,6 @@ from .nsga import (
 )
 from .nsga import NSGAIITwoObjectives, NSGAIIThreeObjectives
 from .nsga import NSGAIIITwoObjectives, NSGAIIIThreeObjectives
+
+from .nsga_extensions import NSGAIslandTwoObjectives, NSGAIslandThreeObjectives
+# from .nsga_extensions import NSGAGradientTwoObjectives, NSGAGradientThreeObjectives TODO

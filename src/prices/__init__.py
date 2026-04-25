@@ -1,5 +1,5 @@
 from .linear_regression import estimate_price_linear_regression
-from .genetic_programming import estimate_price_gplearn, estimate_price_symbolic_regression
+from .genetic_programming import estimate_price_gplearn, estimate_price_symbolic_regression, estimate_price_gaussian_process
 from .fourier_based import estimate_price_sum_of_sines
 
 from .risks import calculate_ratios, estimate_risk

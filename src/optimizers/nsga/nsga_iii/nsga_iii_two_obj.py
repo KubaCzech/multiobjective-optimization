@@ -50,13 +50,18 @@ class NSGAIIITwoObjectives(NSGAIII):
         price = sol @ self.prices
         return price, risk
 
-    def plot_pareto_front(self, title='Price vs Risk Pareto Front (NSGA-III for Two Objectives)'):
+    def plot_pareto_front(self, title='Price vs Risk Pareto Front (NSGA-III for Two Objectives)', show=True, col='blue', mark='o', label=None, ax=None):
         scores = np.array(self.scores)
         prices = scores[:, 0]
         risks = scores[:, 1]
 
-        plt.figure(figsize=(5, 5))
-        plt.scatter(prices, risks, c='blue', marker='o')
+        if ax is None:
+            fig, ax = plt.subplots(figsize=(5, 5))
+    
+        ax.scatter(prices, risks, c=col, marker=mark, label=label, zorder=2)
+
+        # plt.figure(figsize=(5, 5))
+        # plt.scatter(prices, risks, c=col, marker=mark, label=label)
 
         p_min, p_max = min(prices), max(prices)
         r_min, r_max = min(risks), max(risks)
@@ -70,7 +75,7 @@ class NSGAIIITwoObjectives(NSGAIII):
             vec_p = -pt[0] * (p_max - p_min)
             vec_r = pt[1] * (r_max - r_min)
 
-            plt.plot(
+            ax.plot(
                 [utopia_p, utopia_p + vec_p * scale],
                 [utopia_r, utopia_r + vec_r * scale],
                 color='red',
@@ -79,10 +84,15 @@ class NSGAIIITwoObjectives(NSGAIII):
                 zorder=1,
             )
 
-        plt.xlim(p_min, p_max)
-        plt.ylim(r_min, r_max)
-        plt.title(title)
-        plt.ylabel('Risk [min]')
-        plt.xlabel('Price [max]')
-        plt.grid()
-        plt.show()
+        ax.set_xlim(p_min, p_max)
+        ax.set_ylim(r_min, r_max)
+        ax.set_title(title)
+        ax.set_ylabel('Risk [min]')
+        ax.set_xlabel('Price [max]')
+        ax.grid()
+
+        if label:
+            ax.legend()
+
+        if show:
+            plt.show()

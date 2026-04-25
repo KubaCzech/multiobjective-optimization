@@ -103,6 +103,7 @@ class NSGA:
         for sol in self.population:
             score = self.fitness_function(sol)
             self.scores.append(score)
+        self.scores = np.array(self.scores)
 
     def create_random_kraemer_solution(self):
         cuts = np.random.rand(self.n - 1)
@@ -132,6 +133,19 @@ class NSGA:
         for _ in range(dirichlet_solution_number):
             new_sol = self.create_random_dirichlet_solution()
             self.population.append(new_sol)
+    
+    def add_individual_to_population(self, sol):
+        self.population.append(sol)
+
+    def add_multiple_individuals_to_population(self, sols):
+        self.population.extend(sols)
+
+    # ---
+    # History
+    # ---
+    @property
+    def hist(self):
+        return self.history
 
     # ---
     # Mutation Operators

@@ -1,6 +1,6 @@
 from .nsga_ii import NSGAIITwoObjectives, NSGAIIThreeObjectives
 from .nsga_iii import NSGAIIITwoObjectives, NSGAIIIThreeObjectives
-from .nsga import MutationMethod, CrossoverMethod
+from .nsga import MutationMethod, CrossoverMethod, NSGA
 from .evaluation import (
     generational_distance, 
     inverted_generational_distance, 
