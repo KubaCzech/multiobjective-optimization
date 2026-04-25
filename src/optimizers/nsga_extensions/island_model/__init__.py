@@ -1,0 +1,2 @@
+from .nsga_island_two_obj import NSGAIslandTwoObjectives
+from .nsga_island_three_obj import NSGAIslandThreeObjectives
