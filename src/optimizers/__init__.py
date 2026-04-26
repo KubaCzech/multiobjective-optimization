@@ -1,19 +1,20 @@
 from .classical_methods import EpsilonConstraintMethodOptimizer, WeightedSumMethodOptimizer
 
+from .nsga import CrossoverMethod, MutationMethod, NSGA, check_constraints
+from .nsga import NSGAIITwoObjectives, NSGAIIThreeObjectives
+from .nsga import NSGAIIITwoObjectives, NSGAIIIThreeObjectives
+
 from .nsga import (
-    CrossoverMethod,
-    MutationMethod,
     generational_distance,
     inverted_generational_distance,
     nadir_point,
     hypervolume,
-    sensitivity_analysis_plot,
-    average_convergence_plot,
     normalize_scores,
-    plot_multiple_2d_populations,
+    single_convergence_plot,
+    multiple_convergence_plot,
+    sensitivity_analysis_plot,
+    plot_multiple_populations,
 )
-from .nsga import NSGAIITwoObjectives, NSGAIIThreeObjectives
-from .nsga import NSGAIIITwoObjectives, NSGAIIIThreeObjectives
 
 from .nsga_extensions import NSGAIslandTwoObjectives, NSGAIslandThreeObjectives
-# from .nsga_extensions import NSGAGradientTwoObjectives, NSGAGradientThreeObjectives TODO
+from .nsga_extensions import GradientNSGATwoObjectives, GradientNSGAThreeObjectives

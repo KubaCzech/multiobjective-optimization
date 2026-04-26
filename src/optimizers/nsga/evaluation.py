@@ -61,45 +61,69 @@ def sensitivity_analysis_plot(params1: list, params2: list, scores: list, names:
     plt.tight_layout()
     plt.show()
 
-def average_convergence_plot(history, title="Average Convergence Plot"):
+def single_convergence_plot(history, label="Algorithm", ax=None, color=None, title="Convergence Plot", show=True):
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.set_title(title)
+
+    history = np.array(history)
     mean_scores = np.mean(history, axis=1)
     std_scores = np.std(history, axis=1)
     generations = np.arange(len(mean_scores)) + 1
 
-    plt.figure(figsize=(10, 6))
-    plt.plot(generations, mean_scores, label='Mean Metric', color='blue')
+    if show==True:
+        color = 'blue'
+    line, = ax.plot(generations, mean_scores, label=label, linewidth=2, color=color)
+    current_color = line.get_color()
     
-    plt.fill_between(generations, mean_scores - std_scores, mean_scores + std_scores, 
-                     alpha=0.2, color='blue', label='Standard Deviation')
+    ax.fill_between(generations, mean_scores - std_scores, mean_scores + std_scores, 
+                     alpha=0.2, color=current_color)
 
-    plt.title(title)
-    plt.xlabel("Generation")
-    plt.ylabel("Hypervolume")
-    plt.grid(True, linestyle='--', alpha=0.6)
-    plt.legend()
+    ax.set_xlabel("Generation")
+    ax.set_ylabel("Hypervolume")
+    ax.grid(True, linestyle='--', alpha=0.6)
+    ax.legend()
+    
+    if show:
+        plt.show()
+    
+    return ax
+
+def multiple_convergence_plot(histories, labels, title="Comparison of Algorithms"):
+    fig, ax = plt.subplots(figsize=(10, 6))
+    
+    for history, label in zip(histories, labels):
+        single_convergence_plot(history, label=label, ax=ax, show=False)
+
+    ax.set_title(title)
     plt.show()
 
-def plot_multiple_2d_populations(pop1, pop2, pop_names):
-    pts_a = np.array(pop1)
-    pts_b = np.array(pop2)
-
+def plot_multiple_populations(populations, pop_names, title="Populations Comparison"):
     plt.figure(figsize=(10, 6))
-
-    plt.scatter(pts_a[:, 0], pts_a[:, 1], 
-                c='#1f77b4', marker='o', alpha=0.5, s=40, label=pop_names[0])
-
-    plt.scatter(pts_b[:, 0], pts_b[:, 1], 
-                c='#ff7f0e', marker='x', alpha=0.5, s=40, label=pop_names[1])
-
     
-    plt.title(f'{pop_names[0]} and {pop_names[1]} populations comparison', fontsize=14)
-    
+    colors = plt.cm.get_cmap('tab10').colors
+    markers = ['o', 'x', 's', '^', 'v', '<', '>', 'p', '*', 'h']
+
+    for i, (pop, name) in enumerate(zip(populations, pop_names)):
+        pts = np.array(pop)
+        color = colors[i % len(colors)]
+        marker = markers[i % len(markers)]
+        
+        plt.scatter(
+            pts[:, 0], pts[:, 1], 
+            c=[color],
+            marker=marker, 
+            alpha=0.6, 
+            s=40, 
+            label=name
+        )
+
+    plt.title(title, fontsize=14)
     plt.xlabel('Expected Return [$\max$]', fontsize=12)
     plt.ylabel('Risk [$\min$]', fontsize=12)
     
     plt.grid(True, linestyle='--', alpha=0.5)
+    plt.legend(loc='best', fontsize=11, frameon=True)
     
-    plt.legend(loc='best', fontsize=11)
-
     plt.tight_layout()
     plt.show()

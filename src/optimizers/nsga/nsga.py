@@ -51,6 +51,13 @@ def project_onto_simplex(v, s=1.0):
     w = np.maximum(v - theta, 0)
     return w
 
+def check_constraints(sol):
+    eps = 1e-10
+    if np.any(sol < 0):
+        return False
+    if np.sum(sol) > 1.000+eps or np.sum(sol) < 1.000-eps:
+        return False
+    return True
 
 class NSGA:
     def __init__(
