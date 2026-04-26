@@ -1,3 +1,4 @@
+import numpy as np
 import matplotlib.pyplot as plt
 
 from .nsga_island import NSGAIsland
@@ -34,6 +35,7 @@ class NSGAIslandTwoObjectives(NSGAIsland):
             p=p,
             crossover_prob=1.0,
             mutation_prob=0.05,
+            eta_c=30.0,
             eta_m=100.0,
             crossover_method=CrossoverMethod.arithmetic,
             mutation_method=MutationMethod.polynomial,
@@ -61,3 +63,32 @@ class NSGAIslandTwoObjectives(NSGAIsland):
             model.plot_pareto_front(show=False, col=c, mark=m, label=self.islands_names[idx], ax=axes[idx], title=self.islands_names[idx])
         plt.tight_layout()
         plt.show()
+
+    def plot_pareto_front(self, title='Price vs Risk Pareto Front (NSGA-III for Two Objectives)', show=True, col='blue', mark='o', label=None, ax=None):
+        scores = np.array(self.sc)
+        prices = scores[:, 0]
+        risks = scores[:, 1]
+
+        if ax is None:
+            fig, ax = plt.subplots(figsize=(5, 5))
+    
+        ax.scatter(prices, risks, c=col, marker=mark, label=label, zorder=2)
+
+        p_min, p_max = min(prices), max(prices)
+        r_min, r_max = min(risks), max(risks)
+
+        utopia_p = p_max
+        utopia_r = r_min
+
+        ax.set_xlim(p_min, p_max)
+        ax.set_ylim(r_min, r_max)
+        ax.set_title(title)
+        ax.set_ylabel('Risk [min]')
+        ax.set_xlabel('Price [max]')
+        ax.grid()
+
+        if label:
+            ax.legend()
+
+        if show:
+            plt.show()

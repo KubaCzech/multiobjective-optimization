@@ -44,7 +44,7 @@ class GradientNSGAIII(NSGAIII):
         w_profit, w_risk = alpha_vector
         
         # 1. Calculation of gradients
-        grad_return = self.prices
+        grad_return = np.array(self.prices, dtype=float)
         grad_risk = 2 * np.dot(self.risk_matrix, weights)
         
         # 2. Normalization with L2 norm

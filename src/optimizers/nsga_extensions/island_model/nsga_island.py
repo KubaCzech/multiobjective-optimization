@@ -10,6 +10,13 @@ class NSGAIsland:
         self.migration_step = migration_step
         self.history = []
 
+    @property
+    def scores(self):
+        sc = []
+        for model in self.models:
+            sc.extend(model.scores)
+        return sc
+
     def get_population(self):
         all_islands = []
         for m in self.models:
