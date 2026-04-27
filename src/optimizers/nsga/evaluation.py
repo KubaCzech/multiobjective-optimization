@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 from pymoo.indicators.hv import HV
 
 def generational_distance(p, p_star):
@@ -124,6 +125,27 @@ def plot_multiple_populations(populations, pop_names, title="Populations Compari
     
     plt.grid(True, linestyle='--', alpha=0.5)
     plt.legend(loc='best', fontsize=11, frameon=True)
-    
+
     plt.tight_layout()
     plt.show()
+
+
+def plot_multiple_3d_populations(populations, pop_names, title="Populations Comparison (3D)"):
+    custom_colors = ['blue', 'green', 'red', 'orange', 'purple', 'gray']
+    fig = go.Figure()
+    for i, (pop, name) in enumerate(zip(populations, pop_names)):
+        pts = np.array(pop)
+        prices, risks, diversities = pts[:, 0], pts[:, 1], pts[:, 2]
+        fig.add_trace(go.Scatter3d(
+            x=risks, y=prices, z=diversities,
+            mode='markers',
+            name=name,
+            marker=dict(size=4, color=custom_colors[i % len(custom_colors)], opacity=0.7),
+            text=[f"Price: {p:.2f}<br>Risk: {r:.4f}<br>Div: {d:.2f}" for p, r, d in zip(prices, risks, diversities)],
+        ))
+    fig.update_layout(
+        title=title,
+        scene=dict(xaxis_title='Risk [min]', yaxis_title='Price [max]', zaxis_title='Diversity [max]'),
+        margin=dict(l=0, r=0, b=0, t=40),
+    )
+    fig.show()

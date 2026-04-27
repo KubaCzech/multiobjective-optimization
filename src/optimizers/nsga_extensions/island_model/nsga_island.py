@@ -23,7 +23,7 @@ class NSGAIsland:
             all_islands.extend(m.get_population())
         return all_islands
 
-    def evolve(self, nr_of_iterations: int = 2000, plot_: bool = False):
+    def evolve(self, nr_of_iterations: int = 2000, plot_: bool = False, **kwargs):
         assert nr_of_iterations % self.migration_step == 0
         for it_idx in range(nr_of_iterations // self.migration_step):
             for model in self.models:

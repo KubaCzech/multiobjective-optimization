@@ -12,5 +12,6 @@ from .evaluation import (
     single_convergence_plot,
     multiple_convergence_plot,
     sensitivity_analysis_plot, 
-    plot_multiple_populations
+    plot_multiple_populations,
+    plot_multiple_3d_populations,
 )
