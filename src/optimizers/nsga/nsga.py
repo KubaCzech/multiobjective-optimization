@@ -246,7 +246,7 @@ class NSGA:
         offspring2 = 0.5 * ((1 - beta) * sol1 + (1 + beta) * sol2)
 
         # if not check_constraints(offspring1) or not check_constraints(offspring2):
-            # return self.crossover_sbx(sol1, sol2)
+        #     return self.crossover_sbx(sol1, sol2)
         # return offspring1, offspring2
         return project_onto_simplex(offspring1), project_onto_simplex(offspring2)
 
