@@ -191,7 +191,7 @@ class NSGA:
         return project_onto_simplex(new_sol)
 
     def mutation_distribute(self, sol):
-        new_sol = sol.copy()
+        new_sol = np.copy(sol)
         non_zero_indices = np.where(new_sol > 1e-6)[0]
 
         # Must be more than 2 non-zero weights
@@ -245,6 +245,9 @@ class NSGA:
         offspring1 = 0.5 * ((1 + beta) * sol1 + (1 - beta) * sol2)
         offspring2 = 0.5 * ((1 - beta) * sol1 + (1 + beta) * sol2)
 
+        # if not check_constraints(offspring1) or not check_constraints(offspring2):
+            # return self.crossover_sbx(sol1, sol2)
+        # return offspring1, offspring2
         return project_onto_simplex(offspring1), project_onto_simplex(offspring2)
 
     def crossover(self, sol1, sol2):
